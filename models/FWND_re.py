@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from layers.Embed import DataEmbedding, DataEmbedding_wo_pos
 from layers.AutoCorrelation import AutoCorrelation, AutoCorrelationLayer
-from layers.FourierCorrelation import FourierBlock, FourierCrossAttention
+from layers.FourierCorrelation import FourierBlock, FourierCrossAttention, NoiseFourierBlock
 # from layers.MultiWaveletCorrelation import MultiWaveletCross, MultiWaveletTransform
 from layers.SelfAttention_Family import FullAttention, ProbAttention
 from layers.Autoformer_EncDec import Encoder, Decoder, EncoderLayer, DecoderLayer, my_Layernorm, series_decomp, series_decomp_multi
@@ -40,7 +40,7 @@ class FWND(nn.Module):
         self.noise_divider = NosieDivider(None)
         
         #Fourior
-        encoder_self_att = FourierBlock(in_channels=configs.d_model,
+        encoder_self_att = NoiseFourierBlock(in_channels=configs.d_model,
                                             out_channels=configs.d_model,
                                             seq_len=self.seq_len,
                                             modes=configs.modes,
