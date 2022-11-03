@@ -22,16 +22,16 @@ class BaseTrainer(object):
             print('Use CPU')
         return device
 
-        def _get_data(self,*args, **kwargs):
-            pass
-        
-        def vali(self, *args, **kwargs):
-            pass
+    def _get_data(self,*args, **kwargs):
+        pass
+    
+    def vali(self, *args, **kwargs):
+        pass
 
-        def train(self, *args, **kwargs):
-            pass
+    def train(self, *args, **kwargs):
+        pass
 
-        def test(self, *args, **kwargs):
-            pass
+    def test(self, *args, **kwargs):
+        pass
 
 

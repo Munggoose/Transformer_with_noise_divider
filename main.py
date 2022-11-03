@@ -100,7 +100,7 @@ def main():
 
     if args.use_gpu and args.use_multi_gpu:
         args.devices = args.devices.replace(' ', '')
-        device_ids = args.devicess.split(',')
+        device_ids = args.devices.split(',')
         args.device_ids = [int(id_) for id_ in device_ids]
         args.gpu = args.device_ids[0]
 
@@ -109,7 +109,7 @@ def main():
 
 
     Exp = Trainer_Main
-    setting = f'{args.model}_{args.pred_len}_{args.version}'
+    setting = f'{args.model}_{args.pred_len}_{args.version}_{args.data}'
     exp = Exp(args)  # set experiments
     
     print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))

@@ -1,6 +1,6 @@
 # export CUDA_VISIBLE_DEVICES=0
 
-for model in munformer:
+for model in :
 do
 
     for preLen in 96 192 336 720:
