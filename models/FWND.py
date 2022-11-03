@@ -7,7 +7,7 @@ from layers.FourierCorrelation import FourierBlock, FourierCrossAttention
 # from layers.MultiWaveletCorrelation import MultiWaveletCross, MultiWaveletTransform
 from layers.SelfAttention_Family import FullAttention, ProbAttention
 from layers.Autoformer_EncDec import Encoder, Decoder, EncoderLayer, DecoderLayer, my_Layernorm, series_decomp, series_decomp_multi
-from layers.NosieDivider import NosieDivider
+from layers.NoiseDivider import NosieDivider
 import math
 import numpy as np
 
