@@ -5,7 +5,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-
+from layers.NoiseDivider import Nosiefilter
 
 def get_frequency_modes(seq_len, modes=64, mode_select_method='random'):
     """
@@ -26,40 +26,37 @@ def get_frequency_modes(seq_len, modes=64, mode_select_method='random'):
 # ########## custom layer ##############
 class NoiseFourierBlock(nn.Module):
     def __init__(self, in_channels, out_channels, seq_len, modes=0, mode_select_method='random'):
-        super(FourierBlock, self).__init__()
-        print('fourier enhanced block used!')
-        """
-        1D Fourier block. It performs representation learning on frequency domain, 
-        it does FFT, linear transform, and Inverse FFT.    
-        """
-        # get modes on frequency domain
-        # self.index = get_frequency_modes(seq_len, modes=modes, mode_select_method=mode_select_method)
-        print('modes={}, index={}'.format(modes, self.index))
-
+        super(NoiseFourierBlock, self).__init__()
         self.scale = (1 / (in_channels * out_channels))
-        self.weights1 = nn.Parameter(
-            self.scale * torch.rand(8, in_channels // 8, out_channels // 8, len(self.index), dtype=torch.cfloat))
-
-    # Complex multiplication
+        self.noisefileter = Nosiefilter()
+        self.weights1 = nn.Parameter( 
+                                     self.scale * torch.rand(8, in_channels // 8, out_channels // 8, seq_len//2+1, dtype=torch.cfloat))
+    
     def compl_mul1d(self, input, weights):
         # (batch, in_channel, x ), (in_channel, out_channel, x) -> (batch, out_channel, x)
-        return torch.einsum("bhi,hio->bho", input, weights)
-
+        return torch.einsum("bhil,hiol->bhol", input, weights)
+    
     def forward(self, q, k, v, mask):
         # size = [B, L, H, E]
         B, L, H, E = q.shape
         x = q.permute(0, 2, 3, 1)
         # Compute Fourier coefficients
-        x_ft = torch.fft.rfft(x, dim=-1)
+        # x_ft = torch.fft.rfft(x, dim=-1)
+        x_ft,_ = self.noisefileter(x)
         # Perform Fourier neural operations
+        
         out_ft = torch.zeros(B, H, E, L // 2 + 1, device=x.device, dtype=torch.cfloat)
-        for wi, i in enumerate(self.index):
-            out_ft[:, :, :, wi] = self.compl_mul1d(x_ft[:, :, :, i], self.weights1[:, :, :, wi])
+
+        
+        out_ft = self.compl_mul1d(x_ft, self.weights1)
 
         
         # Return to time domain
         x = torch.fft.irfft(out_ft, n=x.size(-1))
         return (x, None)
+
+
+
 
 
 # ########## fourier layer #############
@@ -95,7 +92,6 @@ class FourierBlock(nn.Module):
         for wi, i in enumerate(self.index):
             out_ft[:, :, :, wi] = self.compl_mul1d(x_ft[:, :, :, i], self.weights1[:, :, :, wi])
 
-        
         # Return to time domain
         x = torch.fft.irfft(out_ft, n=x.size(-1))
         return (x, None)
@@ -167,3 +163,16 @@ class FourierCrossAttention(nn.Module):
 
 
 
+if __name__ =='__main__':
+    layer = NoiseFourierBlock(in_channels=512, out_channels=512, seq_len=96, modes=0, mode_select_method='random')
+    x = torch.randn((2,96,8,64))
+    weight = torch.rand(8, 512 // 8, 512// 8, 49, dtype=torch.cfloat)
+    # torch.rand(8, in_channels // 8, out_channels // 8, seq_len, dtype=torch.cfloat))
+    out,_ = layer(x,x,x,None)
+    # print()
+    # out = torch.einsum("bhi,hio->bho", x[:, :, :,0], weight[:, :, :, 1])
+    print(out.shape)
+    # print(x.shape)
+    # print(layer.weights1.shape)
+    # print(weight.shape)
+    
