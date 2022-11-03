@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch import optim
 from data_provider.data_factory import data_provider
 from exp.Trainner_base import BaseTrainer
-from models import FEDformer, Autoformer, Informer, Transformer,FWND
+from models import FEDformer, Autoformer, Informer, Transformer,FWND,FWND_re
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 from tqdm import tqdm
@@ -26,12 +26,13 @@ class Trainer_Main(BaseTrainer):
             'Autoformer': Autoformer,
             'Transformer': Transformer,
             'Informer': Informer,
-            'FWND':FWND
+            'FWND':FWND,
+            'FWND_re':FWND_re
         }
-        if self.args.model =='FWND':
-            model = FWND.FWND(self.args).float()
+        if self.args.model in ['FWND','FWND_re']:
+            model = model_dict[self.args.model].FWND(self.args).float()
         else:
-            model = model_dict[self.args.model]
+            model = model_dict[self.args.model].Model(self.args).float()
         
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids = self.args.deivce_ids)

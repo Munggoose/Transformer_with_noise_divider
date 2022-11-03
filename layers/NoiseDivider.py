@@ -37,7 +37,7 @@ class Nosiefilter(nn.Module):
 
 
     def __init__(self):
-        super(NosieDivider,self).__init__()
+        super(Nosiefilter,self).__init__()
     
 
     def filtering(self,x , x_abs, i,thres):
