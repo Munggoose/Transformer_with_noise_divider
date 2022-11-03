@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-
-
 class NosieDivider(nn.Module):
 
 
@@ -14,11 +12,11 @@ class NosieDivider(nn.Module):
 
     def filtering(self,x , x_abs, i,thres):
         sample = torch.where(x_abs > thres, x, 0.)
-        mask = torch.where(sample != 0.,0.,1.)
+        mask = torch.where(sample != 0.,1.,0)
         noise_mask = torch.where(sample == 0.,1.,0.)
         return sample ,mask, noise_mask
 
-     #-> [bs, fs, len]
+    #-> [bs, fs, len]
     
 
     def compl_mul1d(self, input, weights):
@@ -26,28 +24,26 @@ class NosieDivider(nn.Module):
 
 
     def forward(self,x):
-
+        B,C,S = x.shape
+        
         out =  torch.fft.rfft(x,dim=-1) # len(x)//2 + 1
         noise = out.clone()
-        x_abs = torch.abs(out).squeeze()
-        x_md = torch.median(x_abs,dim=-1).values.squeeze(0)
+        x_abs = torch.abs(out)
+        x_md = torch.median(x_abs,dim=-1).values
+
+        out,mask,noise_mask = self.filtering(out,x_abs,0,x_md.unsqueeze(-1))
 
         # if config.single:
-        out[0,0],mask,noise_mask = self.filtering(out.squeeze(0),x_abs,0,x_md)
-        noise[0,0] =  noise[0,0] * noise_mask
-        noise = torch.fft.irfft(noise)
-        out = torch.fft.irfft(out)
+        noise =  noise * noise_mask
+        noise = torch.fft.irfft(noise,dim=-1)
+        out = torch.fft.irfft(out,dim=-1)
         return out,noise, mask, noise_mask
+
 
 if __name__ =='__main__':
     config = None
-    layer = NosieDivider(config)
-    x = torch.randn([1,1,10])
-    out, mask = layer(x)
-    print(out)
-    print(mask)
-    exit()
-    mask = mask.expand_as(out)
-    print(torch.index_select(mask,dim=-1))
-    print(out[mask])
+    layer = NosieDivider2(config)
+    x = torch.randn([2,3,10])
+    out,noise, mask, noise_mask= layer(x)
+    print(out.shape)
     # print(torch.masked_select(out, mask))
